@@ -6,7 +6,7 @@ import { WeatherCard } from "@features/weather/components/WeatherCard";
 import { HourlyWeather } from "@features/weather/components/HourlyWeather";
 import { LocationSearch } from "@features/weather/components/LocationSearch";
 import { FavoritesList } from "@features/weather/components/FavoritesList";
-import { AddFavoriteModal } from "@features/weather/components/AddFavoriteModal";
+import { useAddFavoriteModal } from "@features/weather/components/AddFavoriteModal";
 import { Loading } from "@shared/ui/Loading";
 import { Error } from "@shared/ui/Error";
 import { Icon } from "@shared/ui/Icon";
@@ -17,7 +17,7 @@ import type { WeatherData } from "@shared/api/weather/types";
 export const HomePage = () => {
   const navigate = useNavigate();
   const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
-  const [showAddFavoriteModal, setShowAddFavoriteModal] = useState(false);
+  const { openAddFavoriteModal } = useAddFavoriteModal();
   const favorites = useFavoritesStore((state) => state.favorites);
   const addFavorite = useFavoritesStore((state) => state.addFavorite);
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
@@ -66,18 +66,18 @@ export const HomePage = () => {
       }
     } else {
       // 즐겨찾기 추가 - 모달 띄우기
-      setShowAddFavoriteModal(true);
-    }
-  };
-
-  const handleSaveFavorite = (alias?: string) => {
-    if (selectedLocation) {
-      const success = addFavorite(selectedLocation, alias);
-      if (!success) {
-        alert("즐겨찾기는 최대 6개까지 추가할 수 있습니다.");
-      } else {
-        setShowAddFavoriteModal(false);
-      }
+      openAddFavoriteModal(
+        selectedLocation.displayName,
+        (alias) => {
+          if (selectedLocation) {
+            const success = addFavorite(selectedLocation, alias);
+            if (!success) {
+              alert("즐겨찾기는 최대 6개까지 추가할 수 있습니다.");
+            }
+          }
+        },
+        () => {}
+      );
     }
   };
 
@@ -145,13 +145,6 @@ export const HomePage = () => {
             </div>
           </div>
         )}
-
-        <AddFavoriteModal
-          isOpen={showAddFavoriteModal}
-          locationName={selectedLocation?.displayName || ""}
-          onSave={handleSaveFavorite}
-          onCancel={() => setShowAddFavoriteModal(false)}
-        />
       </div>
     </div>
   );

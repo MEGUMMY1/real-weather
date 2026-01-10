@@ -1,8 +1,7 @@
-import { useState } from "react";
 import type { WeatherData } from "@shared/api/weather/types";
 import type { FavoriteLocation } from "@shared/lib/useFavoritesStore";
 import { Icon } from "@shared/ui/Icon";
-import { AliasEditModal } from "./AliasEditModal";
+import { useAliasEditModal } from "./AliasEditModal";
 
 interface FavoriteCardProps {
   favorite: FavoriteLocation;
@@ -19,7 +18,7 @@ export const FavoriteCard = ({
   onRemove,
   onUpdateAlias,
 }: FavoriteCardProps) => {
-  const [isEditingAlias, setIsEditingAlias] = useState(false);
+  const { openAliasEditModal } = useAliasEditModal();
   const displayName = favorite.alias || favorite.displayName;
 
   return (
@@ -32,7 +31,13 @@ export const FavoriteCard = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setIsEditingAlias(true);
+              openAliasEditModal(
+                favorite.alias || favorite.displayName,
+                (alias) => {
+                  onUpdateAlias(alias);
+                },
+                () => {}
+              );
             }}
             className="text-white/60 hover:text-white"
             title="별칭 수정"
@@ -52,9 +57,7 @@ export const FavoriteCard = ({
         </div>
 
         <div className="pr-12">
-          <h3 className="text-white font-semibold text-lg mb-2 truncate">
-            {displayName}
-          </h3>
+          <h3 className="text-white font-semibold text-lg mb-2 truncate">{displayName}</h3>
 
           {weatherData ? (
             <div className="space-y-1">
@@ -71,17 +74,6 @@ export const FavoriteCard = ({
           )}
         </div>
       </div>
-
-      <AliasEditModal
-        isOpen={isEditingAlias}
-        currentAlias={favorite.alias || favorite.displayName}
-        onSave={(alias) => {
-          onUpdateAlias(alias);
-          setIsEditingAlias(false);
-        }}
-        onCancel={() => setIsEditingAlias(false)}
-      />
     </>
   );
 };
-

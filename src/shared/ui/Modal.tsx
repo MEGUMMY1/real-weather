@@ -22,6 +22,21 @@ export const Modal = ({ isOpen, onClose, title, children, className = "" }: Moda
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -49,4 +64,3 @@ export const Modal = ({ isOpen, onClose, title, children, className = "" }: Moda
     </div>
   );
 };
-
