@@ -15,18 +15,25 @@ export const useWeather = () => {
   return useQuery({
     queryKey: ["weather"],
     queryFn: async () => {
-      // 현재 위치 가져오기
       const position = await getCurrentPosition();
-      // 지역명 가져오기
-      const locationName = await getLocationNameFromCoordinates(position.lat, position.lon);
-      // 날씨 데이터 가져오기
-      const weatherData = await fetchWeatherData(position.lat, position.lon);
+
+      const [locationName, weatherData] = await Promise.allSettled([
+        getLocationNameFromCoordinates(position.lat, position.lon),
+        fetchWeatherData(position.lat, position.lon),
+      ]);
+
+      if (weatherData.status === "rejected") {
+        throw weatherData.reason;
+      }
+
+      const resolvedLocationName = locationName.status === "fulfilled" ? locationName.value : null;
+
       return {
-        weatherData,
-        locationName,
+        weatherData: weatherData.value,
+        locationName: resolvedLocationName,
       };
     },
-    staleTime: 5 * 60 * 1000, // 5분
-    retry: 2,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 };

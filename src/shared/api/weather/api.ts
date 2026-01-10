@@ -28,7 +28,18 @@ export const fetchWeatherData = async (lat: number, lon: number): Promise<Weathe
   const url = `${BASE_URL}?${params.toString()}`;
 
   try {
-    const response = await fetch(url);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data: WeatherApiResponse = await response.json();
 
     if (data.response.header.resultCode !== "00") {
@@ -63,7 +74,13 @@ export const fetchWeatherData = async (lat: number, lon: number): Promise<Weathe
     return parseWeatherData(itemsArray, lat, lon, nx, ny);
   } catch (error) {
     console.error("날씨 API 호출 오류:", error);
-    throw error;
+    if (error instanceof Error) {
+      if (error.name === "AbortError") {
+        throw new Error("요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.");
+      }
+      throw error;
+    }
+    throw new Error("날씨 데이터를 가져오는데 실패했습니다.");
   }
 };
 

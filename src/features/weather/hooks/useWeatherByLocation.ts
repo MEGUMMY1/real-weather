@@ -22,8 +22,7 @@ export const useWeatherByLocation = (location: LocationItem | null) => {
       return await fetchWeatherData(coordinates.lat, coordinates.lon);
     },
     enabled: !!location,
-    staleTime: 5 * 60 * 1000, // 5분
-    retry: 2,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 };
-

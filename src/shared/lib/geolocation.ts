@@ -10,7 +10,7 @@ export interface Position {
 export const getCurrentPosition = (): Promise<Position> => {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
-      reject(new Error('Geolocation을 지원하지 않는 브라우저입니다.'));
+      reject(new Error("Geolocation을 지원하지 않는 브라우저입니다."));
       return;
     }
 
@@ -22,26 +22,25 @@ export const getCurrentPosition = (): Promise<Position> => {
         });
       },
       (error) => {
-        let errorMessage = '위치 정보를 가져올 수 없습니다.';
+        let errorMessage = "위치 정보를 가져올 수 없습니다.";
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = '위치 정보 접근이 거부되었습니다.';
+            errorMessage = "위치 정보 접근이 거부되었습니다.";
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = '위치 정보를 사용할 수 없습니다.';
+            errorMessage = "위치 정보를 사용할 수 없습니다.";
             break;
           case error.TIMEOUT:
-            errorMessage = '위치 정보 요청 시간이 초과되었습니다.';
+            errorMessage = "위치 정보 요청 시간이 초과되었습니다.";
             break;
         }
         reject(new Error(errorMessage));
       },
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
+        enableHighAccuracy: false,
+        timeout: 5000,
+        maximumAge: 5 * 60 * 1000,
       }
     );
   });
 };
-

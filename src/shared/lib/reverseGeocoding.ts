@@ -13,7 +13,18 @@ const loadLocationData = async (): Promise<LocationItem[]> => {
   }
 
   try {
-    const response = await fetch("/korea_districts.json");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch("/korea_districts.json", {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data: string[] = await response.json();
     locationDataCache = data.map((item) => {
       const parts = item.split("-");
@@ -96,4 +107,3 @@ export const getLocationNameFromCoordinates = async (
     return null;
   }
 };
-
