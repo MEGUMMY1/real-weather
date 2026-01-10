@@ -169,6 +169,21 @@ const ICONS_TEMP: IconType = {
       />
     ),
   },
+  chevron_right: {
+    svgOptions: {
+      viewBox: "0 0 24 24",
+    },
+    icon: (
+      <path
+        d="M9 5l7 7-7 7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    ),
+  },
 };
 
 export type IconList = keyof typeof ICONS_TEMP;
