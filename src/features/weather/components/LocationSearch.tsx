@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { searchLocations, type LocationItem } from "@shared/lib/locationSearch";
-import { useEnterKeyHandler } from "@shared/lib/useEnterKey";
 import { Icon } from "@shared/ui/Icon";
 
 interface LocationSearchProps {
@@ -13,7 +12,10 @@ export const LocationSearch = ({ onSelectLocation, selectedLocation }: LocationS
   const [results, setResults] = useState<LocationItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const searchRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -29,12 +31,18 @@ export const LocationSearch = ({ onSelectLocation, selectedLocation }: LocationS
   useEffect(() => {
     if (selectedLocation) {
       setQuery(selectedLocation.displayName);
+      setSelectedIndex(-1);
     } else {
       setQuery("");
       setResults([]);
       setIsOpen(false);
+      setSelectedIndex(-1);
     }
   }, [selectedLocation]);
+
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [results]);
 
   const handleSearch = async (searchQuery: string) => {
     setQuery(searchQuery);
@@ -42,6 +50,7 @@ export const LocationSearch = ({ onSelectLocation, selectedLocation }: LocationS
     if (!searchQuery.trim()) {
       setResults([]);
       setIsOpen(false);
+      setSelectedIndex(-1);
       return;
     }
 
@@ -51,9 +60,11 @@ export const LocationSearch = ({ onSelectLocation, selectedLocation }: LocationS
     try {
       const locations = await searchLocations(searchQuery, 10);
       setResults(locations);
+      setSelectedIndex(-1);
     } catch (error) {
       console.error("장소 검색 오류:", error);
       setResults([]);
+      setSelectedIndex(-1);
     } finally {
       setIsLoading(false);
     }
@@ -62,24 +73,71 @@ export const LocationSearch = ({ onSelectLocation, selectedLocation }: LocationS
   const handleSelect = (location: LocationItem) => {
     setQuery(location.displayName);
     setIsOpen(false);
+    setSelectedIndex(-1);
     onSelectLocation(location);
   };
 
-  const handleEnter = () => {
-    if (results.length > 0) {
-      // 첫 번째 검색 결과 선택
-      handleSelect(results[0]);
-    } else if (query.trim() && !isLoading) {
-      // 검색 결과가 없으면 검색 시도
-      handleSearch(query);
+  useEffect(() => {
+    if (selectedIndex >= 0 && itemRefs.current[selectedIndex] && resultsRef.current) {
+      const selectedElement = itemRefs.current[selectedIndex];
+      const resultsContainer = resultsRef.current;
+
+      if (selectedElement) {
+        const itemTop = selectedElement.offsetTop;
+        const itemBottom = itemTop + selectedElement.offsetHeight;
+        const containerTop = resultsContainer.scrollTop;
+        const containerBottom = containerTop + resultsContainer.offsetHeight;
+
+        if (itemTop < containerTop) {
+          resultsContainer.scrollTop = itemTop;
+        } else if (itemBottom > containerBottom) {
+          resultsContainer.scrollTop = itemBottom - resultsContainer.offsetHeight;
+        }
+      }
+    }
+  }, [selectedIndex]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isOpen || results.length === 0) {
+      if (e.key === "Enter" && query.trim() && !isLoading) {
+        handleSearch(query);
+      } else if (e.key === "Escape") {
+        setIsOpen(false);
+        setSelectedIndex(-1);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedIndex((prev) => {
+          const nextIndex = prev < results.length - 1 ? prev + 1 : prev;
+          return nextIndex >= 0 ? nextIndex : 0;
+        });
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedIndex((prev) => {
+          const nextIndex = prev > 0 ? prev - 1 : -1;
+          return nextIndex;
+        });
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedIndex >= 0 && selectedIndex < results.length) {
+          handleSelect(results[selectedIndex]);
+        } else if (results.length > 0) {
+          handleSelect(results[0]);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsOpen(false);
+        setSelectedIndex(-1);
+        break;
     }
   };
-
-  const handleEscape = () => {
-    setIsOpen(false);
-  };
-
-  const handleKeyDown = useEnterKeyHandler(handleEnter, handleEscape);
 
   return (
     <div className="relative w-full" ref={searchRef}>
@@ -121,14 +179,25 @@ export const LocationSearch = ({ onSelectLocation, selectedLocation }: LocationS
       </div>
 
       {isOpen && results.length > 0 && (
-        <div className="absolute z-50 w-full mt-2 bg-white/95 backdrop-blur-md rounded-lg shadow-xl max-h-60 overflow-y-auto">
+        <div
+          ref={resultsRef}
+          className="absolute z-50 w-full mt-2 bg-white/95 backdrop-blur-md rounded-lg shadow-xl max-h-60 overflow-y-auto"
+        >
           {results.map((location, index) => (
             <button
               key={index}
+              ref={(el) => {
+                itemRefs.current[index] = el;
+              }}
               onClick={() => handleSelect(location)}
-              className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
+              onMouseEnter={() => setSelectedIndex(index)}
+              className={`w-full px-4 py-3 text-left transition-colors border-b border-gray-100 last:border-b-0 ${
+                selectedIndex === index
+                  ? "bg-blue-100 text-blue-900"
+                  : "hover:bg-blue-50 text-gray-800"
+              }`}
             >
-              <div className="text-gray-800 font-medium">{location.displayName}</div>
+              <div className="font-medium">{location.displayName}</div>
               <div className="text-sm text-gray-500 mt-1">
                 {location.parts.si}
                 {location.parts.gu && ` > ${location.parts.gu}`}
