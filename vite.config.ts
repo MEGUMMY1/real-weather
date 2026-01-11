@@ -13,10 +13,13 @@ export default defineConfig({
     {
       name: "remove-console",
       apply: "build",
-      transform(code) {
-        if (process.env.NODE_ENV === "production") {
-          return code.replace(/console\.(log|error|warn|info|debug)/g, "// console.$1");
+      transform(code, id) {
+        if (!id.includes("node_modules") && id.includes("src")) {
+          if (process.env.NODE_ENV === "production") {
+            return code.replace(/console\.(log|error|warn|info|debug)/g, "// console.$1");
+          }
         }
+        return null;
       },
     },
   ],
