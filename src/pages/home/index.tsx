@@ -10,6 +10,7 @@ import { useAddFavoriteModal } from "@features/weather/components/AddFavoriteMod
 import { Loading } from "@shared/ui/Loading";
 import { Error } from "@shared/ui/Error";
 import { Icon } from "@shared/ui/Icon";
+import { useToast } from "@shared/ui/useToast";
 import { useFavoritesStore, type FavoriteLocation } from "@shared/lib/useFavoritesStore";
 import type { LocationItem } from "@shared/lib/locationSearch";
 import type { WeatherData } from "@shared/api/weather/types";
@@ -18,6 +19,7 @@ export const HomePage = () => {
   const navigate = useNavigate();
   const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
   const { openAddFavoriteModal } = useAddFavoriteModal();
+  const { showToast } = useToast();
   const favorites = useFavoritesStore((state) => state.favorites);
   const addFavorite = useFavoritesStore((state) => state.addFavorite);
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
@@ -72,7 +74,7 @@ export const HomePage = () => {
           if (selectedLocation) {
             const success = addFavorite(selectedLocation, alias);
             if (!success) {
-              alert("즐겨찾기는 최대 6개까지 추가할 수 있습니다.");
+              showToast("즐겨찾기는 최대 6개까지 추가할 수 있습니다.", "error");
             }
           }
         },
