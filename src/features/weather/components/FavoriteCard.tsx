@@ -56,7 +56,7 @@ export const FavoriteCard = ({
           </button>
         </div>
 
-        <div className="pr-12">
+        <div>
           <h3 className="text-white font-semibold text-lg mb-2 truncate">{displayName}</h3>
 
           {weatherData ? (
